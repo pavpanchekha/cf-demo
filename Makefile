@@ -11,7 +11,7 @@ build: $(JAVA_FILES) | $(JAVAC)
 	$(JAVAC) -cp '$(CF)/checker/dist/checker.jar:$(CF)/checker/dist/javac.jar' $(JAVA_FILES)
 
 test: build
-	$(JAVAC) -sourcepath programs -classpath '$(shell pwd)' -processor divbyzero.DivByZeroChecker 'programs/Foo.java' || true
+	$(JAVAC) -sourcepath tests -classpath '$(shell pwd)' -processor divbyzero.DivByZeroChecker 'tests/Foo.java' || true
 
 $(JAVAC): | $(CF).zip
 	unzip '$(CF).zip'

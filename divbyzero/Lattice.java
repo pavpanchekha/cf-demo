@@ -1,17 +1,20 @@
 package divbyzero;
 
+import java.lang.annotation.Annotation;
 import divbyzero.qual.*;
 
 public enum Lattice {
-    unknown (-1), nonnegative (0), positive (1);
+    unknown (Top.class),
+    nonnegative (NonNegative.class),
+    positive (Positive.class);
 
-    private final int value;
-    private Lattice(int value) {
-        this.value = value;
+    public final Class<? extends Annotation> cls;
+    private Lattice(Class<? extends Annotation> cls) {
+        this.cls = cls;
     }
 
     public static Lattice transferPlus(Lattice lhs, Lattice rhs) {
-        if (lhs.value >= nonnegative.value && rhs.value >= nonnegative.value) {
+        if ((lhs == nonnegative || lhs == positive) && (rhs == nonnegative || rhs == positive)) {
             if (lhs == positive || rhs == positive) {
                 return positive;
             } else {

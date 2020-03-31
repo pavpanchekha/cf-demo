@@ -31,6 +31,11 @@ public class DivByZeroTransfer extends CFTransfer {
         return analysis.getTypeFactory().getQualifierHierarchy().leastUpperBound(x, y);
     }
 
+    /** Compute the greatest-lower-bound of two points in the lattice */
+    private AnnotationMirror glb(AnnotationMirror x, AnnotationMirror y) {
+        return analysis.getTypeFactory().getQualifierHierarchy().greatestLowerBound(x, y);
+    }
+
     // ========================================================================
     // Checker Framework plumbing
 
@@ -52,34 +57,25 @@ public class DivByZeroTransfer extends CFTransfer {
         AnnotationMirror a = getAnnotation(n);
         if (a == null) {
             return Lattice.unknown;
-        } else if (AnnotationUtils.areSame(a, export(Lattice.positive))) {
-            return Lattice.positive;
-        } else if (AnnotationUtils.areSame(a, export(Lattice.nonnegative))) {
-            return Lattice.nonnegative;
         } else {
+            for (Lattice l : Lattice.values()) {
+                if (AnnotationUtils.areSame(a, export(l))) {
+                    return l;
+                }
+            }
             return Lattice.unknown;
         }
     }
     
     public AnnotationMirror export(Lattice l) {
-        Class<? extends Annotation> c;
-        switch (l) {
-        case positive:
-            c = Positive.class;
-            break;
-        case nonnegative:
-            c = NonNegative.class;
-            break;
-        default:
-            c = Top.class;
-            break;
-        }
-        return AnnotationBuilder.fromClass(analysis.getTypeFactory().getElementUtils(), c);
+        return AnnotationBuilder.fromClass(analysis.getTypeFactory().getElementUtils(), l.cls);
     }
    
     private TransferResult<CFValue, CFStore> refine(BinaryOperationNode n, Lattice.Pair resultTrue, Lattice.Pair resultFalse, TransferResult<CFValue, CFStore> out) {
         AnnotationMirror l = getAnnotation(n.getLeftOperand());
         AnnotationMirror r = getAnnotation(n.getRightOperand());
+
+        if (l == null || r == null) return out;
 
         AnnotationMirror tl = export(resultTrue.lhs);
         AnnotationMirror tr = export(resultTrue.rhs);
@@ -89,20 +85,20 @@ public class DivByZeroTransfer extends CFTransfer {
         CFStore thenStore = out.getThenStore().copy();
         thenStore.insertValue(
             FlowExpressions.internalReprOf(analysis.getTypeFactory(), n.getLeftOperand()),
-            lub(l, tl));
+            glb(l, tl));
 
         thenStore.insertValue(
             FlowExpressions.internalReprOf(analysis.getTypeFactory(), n.getRightOperand()),
-            lub(r, tr));
+            glb(r, tr));
 
         CFStore elseStore = out.getElseStore().copy();
         elseStore.insertValue(
             FlowExpressions.internalReprOf(analysis.getTypeFactory(), n.getLeftOperand()),
-            lub(l, fl));
+            glb(l, fl));
 
         elseStore.insertValue(
             FlowExpressions.internalReprOf(analysis.getTypeFactory(), n.getRightOperand()),
-            lub(r, fr));
+            glb(r, fr));
 
         return new ConditionalTransferResult<>(out.getResultValue(), thenStore, elseStore);
     }
