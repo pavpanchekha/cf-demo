@@ -11,8 +11,15 @@ class LockTest {
         lock = new ReentrantLock();
     }
 
-    void test() {
+    @MayReleaseLocks void test() {
         // Read from `o`
+        need_lock();
+        lock();
+        need_lock();
+        o.toString();
+        method();
+        o.toString();
+        lock.unlock();
 
         // Lock `lock`
         
@@ -20,8 +27,17 @@ class LockTest {
     }
 
     // @LockingFree
+    @LockingFree void method() {
+        
+    }
 
     // @EnsuresLockHeld
+    @EnsuresLockHeld("lock") void lock() {
+        lock.lock();
+    }
 
     // @Holding
+    @Holding("lock") void need_lock() {
+        o.toString();
+    }
 }

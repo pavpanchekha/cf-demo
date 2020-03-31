@@ -30,7 +30,7 @@ public enum Lattice {
             switch (rhs) {
             case positive:
             case nonnegative:
-                return new Lattice.Pair(positive, positive);
+                return new Lattice.Pair(positive, nonnegative);
             default:
                 return new Lattice.Pair(unknown, unknown);
             }
